@@ -1,9 +1,10 @@
-# 🚀 Ecentric Google Pay Client SDK
+# 🚀 VQ Digital Wallet Google Pay SDK
 
-[![npm version](https://badge.fury.io/js/ecentric-googlepay-clientsdk.svg)](https://badge.fury.io/js/ecentric-googlepay-clientsdk)
+[![npm version](https://badge.fury.io/js/vq-digitalwallet-google.svg)](https://badge.fury.io/js/vq-digitalwallet-google)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![Browser Support](https://img.shields.io/badge/Browser-Modern-green.svg)](#browser-compatibility)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/)
 
 A lightweight, JavaScript SDK for integrating Google Pay with secure payment processing. Features advanced security, rate limiting, session management, and comprehensive error handling.
 
@@ -18,24 +19,30 @@ A lightweight, JavaScript SDK for integrating Google Pay with secure payment pro
 - 📊 **Session Management** - Secure token handling
 - 🔧 **Easy Integration** - Simple, intuitive API
 
+## 🎮 Live Demo
+
+Open [`demo/index.html`](./demo/index.html) in any browser to test the full SDK flow — initialization, button rendering, and all utility functions (Base64 encode/decode, UUID generation, session token management). No server required.
+
+> Once the GitHub repository is live, the demo is also hosted at **https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/**
+
 ## 📦 Installation
 
 ### NPM
 
 ```bash
-npm install ecentric-googlepay-clientsdk
+npm install vq-digitalwallet-google
 ```
 
 ### Yarn
 
 ```bash
-yarn add ecentric-googlepay-clientsdk
+yarn add vq-digitalwallet-google
 ```
 
 ### CDN
 
 ```html
-<script src="https://unpkg.com/ecentric-googlepay-clientsdk@latest/epsgooglepay.js"></script>
+<script src="https://unpkg.com/vq-digitalwallet-google@latest/vqdigitalwalletgoogle.js"></script>
 ```
 
 ## 🚀 Quick Start
@@ -44,7 +51,7 @@ yarn add ecentric-googlepay-clientsdk
 
 ```javascript
 // Initialize the SDK
-const googlePay = new EpsGooglePay({
+const googlePay = new VqDigitalWalletGoogle({
     environment: 'TEST', // or 'PRODUCTION'
     gateway: 'your-gateway-name',
     merchantId: 'BCR2DN4T23YWKJHG',
@@ -91,13 +98,15 @@ googlePay.initialize()
     <!-- Google Pay button container -->
     <div id="google-pay-button"></div>
 
-    <script src="https://unpkg.com/ecentric-googlepay-clientsdk@latest/epsgooglepay.js"></script>
+    <script src="https://unpkg.com/vq-digitalwallet-google@latest/vqdigitalwalletgoogle.js"></script>
     <script>
         // Your integration code here
     </script>
 </body>
 </html>
 ```
+
+> See the [interactive demo](./demo/index.html) for a full working example.
 
 ## 📚 API Documentation
 
@@ -196,18 +205,40 @@ Clears the stored session token.
 
 Cleanup method to destroy the instance.
 
+#### `encodePayloadToBase64(data): string`
+
+Encodes a string to Base64. Used internally during payment processing; exposed for debugging and testing.
+
+```javascript
+const encoded = googlePay.encodePayloadToBase64('{"orderId":"TEST-001","amount":99.99}');
+```
+
+Throws if encoding fails.
+
+#### `decodePayloadFromBase64(payload): object`
+
+Decodes a Base64 string back to a parsed JSON object.
+
+```javascript
+const decoded = googlePay.decodePayloadFromBase64(encodedString);
+// decoded = { orderId: 'TEST-001', amount: 99.99 }
+```
+
+- Throws `'Invalid base64 encoded payload'` for malformed Base64 input
+- Throws `'Failed to decode base64 payload'` if the decoded content is not valid JSON
+
 ## 🔧 Advanced Usage
 
 ### TypeScript Integration
 
 ```typescript
-import EpsGooglePay, { 
-    EpsGooglePayConfig, 
+import VqDigitalWalletGoogle, { 
+    VqDigitalWalletGoogleConfig, 
     PaymentData, 
     PaymentResult 
-} from 'ecentric-googlepay-clientsdk';
+} from 'vq-digitalwallet-google';
 
-const config: EpsGooglePayConfig = {
+const config: VqDigitalWalletGoogleConfig = {
     environment: 'TEST',
     gateway: 'example',
     merchantId: 'BCR2DN4T23YWKJHG',
@@ -222,13 +253,13 @@ const config: EpsGooglePayConfig = {
     }
 };
 
-const googlePay = new EpsGooglePay(config);
+const googlePay = new VqDigitalWalletGoogle(config);
 ```
 
 ### Error Handling
 
 ```javascript
-const googlePay = new EpsGooglePay({
+const googlePay = new VqDigitalWalletGoogle({
     environment: 'TEST',
     gateway: 'example',
     merchantId: 'BCR2DN4T23YWKJHG',
@@ -269,6 +300,15 @@ try {
     // Show user-friendly message
 }
 ```
+
+## 🔐 Security Best Practices
+
+- **Never expose credentials in frontend code** — `gatewayMerchantId` and merchant credentials belong in environment variables, not hard-coded JavaScript.
+- **Always validate the token server-side** — the Base64 token returned by `requestPayment` must be forwarded server-to-server to your payment gateway for authorisation. Never treat a client-side token as proof of a successful charge.
+- **Use PRODUCTION only with a registered merchant account** — complete [Google Pay's merchant approval process](https://pay.google.com/business/console) before switching environments.
+- **Enforce HTTPS** — Google Pay will not load on non-secure origins in production.
+- **Rate limiting is client-side only** — the SDK enforces 3 requests/second per instance as a UX safeguard. Implement independent server-side rate limiting on your token processing endpoint.
+- **Rotate credentials regularly** — treat `gatewayMerchantId` like a password; regenerate it if you suspect exposure.
 
 ## 🌐 Browser Compatibility
 
@@ -313,14 +353,14 @@ try {
 
 ```jsx
 import React, { useEffect, useRef } from 'react';
-import EpsGooglePay from 'ecentric-googlepay-clientsdk';
+import VqDigitalWalletGoogle from 'vq-digitalwallet-google';
 
 function GooglePayButton({ amount, onPaymentSuccess }) {
     const buttonRef = useRef(null);
     const googlePayRef = useRef(null);
 
     useEffect(() => {
-        const googlePay = new EpsGooglePay({
+        const googlePay = new VqDigitalWalletGoogle({
             environment: 'TEST',
             gateway: 'example',
             merchantId: 'BCR2DN4T23YWKJHG',
@@ -363,7 +403,7 @@ function GooglePayButton({ amount, onPaymentSuccess }) {
 </template>
 
 <script>
-import EpsGooglePay from 'ecentric-googlepay-clientsdk';
+import VqDigitalWalletGoogle from 'vq-digitalwallet-google';
 
 export default {
     props: ['amount'],
@@ -377,7 +417,7 @@ export default {
     },
     methods: {
         initializeGooglePay() {
-            this.googlePay = new EpsGooglePay({
+            this.googlePay = new VqDigitalWalletGoogle({
                 environment: 'TEST',
                 gateway: 'example',
                 merchantId: 'BCR2DN4T23YWKJHG',
@@ -413,7 +453,7 @@ export default {
 ```typescript
 // google-pay.service.ts
 import { Injectable } from '@angular/core';
-import EpsGooglePay, { EpsGooglePayConfig, PaymentData } from 'ecentric-googlepay-clientsdk';
+import VqDigitalWalletGoogle, { VqDigitalWalletGoogleConfig, PaymentData } from 'vq-digitalwallet-google';
 
 @Injectable({
   providedIn: 'root'
@@ -424,12 +464,12 @@ export class GooglePayService {
 
   constructor() {}
 
-  async initialize(config: EpsGooglePayConfig): Promise<boolean> {
+  async initialize(config: VqDigitalWalletGoogleConfig): Promise<boolean> {
     if (this.isInitialized) {
       return this.googlePay.isReadyToPay;
     }
 
-    this.googlePay = new EpsGooglePay(config);
+    this.googlePay = new VqDigitalWalletGoogle(config);
 
     try {
       const isReady = await this.googlePay.initialize();
@@ -611,7 +651,7 @@ export class AppModule { }
 
 ```bash
 # Clone the repository
-git clone https://dev.azure.com/epsdev/OnlinePayments/_git/Ecentric.GooglePay.ClientSdk
+git clone https://github.com/veritas-quaesitor/vq-digitalwallet-google
 
 # Install dependencies
 npm install
@@ -632,7 +672,7 @@ npm run docs
 
 MIT License
 
-Copyright (c) 2024 Ecentric
+Copyright (c) 2024 Veritas Quaesitor
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -654,9 +694,9 @@ SOFTWARE.
 
 ## 🆘 Support
 
-- 📧 **Email**: [support@ecentric.co.za](mailto:support@ecentric.co.za)
-- 📖 **Documentation**: [API Docs](https://ecentric.readme.io)
-- 🐛 **Issues**: [GitHub Issues](https://dev.azure.com/epsdev/OnlinePayments/_git/Ecentric.GooglePay.ClientSdk/issues)
+- 📧 **Email**: fvaneeden83@gmail.com
+- 📖 **Documentation**: See the docs/ folder
+- 🐛 **Issues**: Open an issue on GitHub
 
 ## 🏷️ Version History
 
@@ -676,4 +716,4 @@ SOFTWARE.
 
 ---
 
-### Made with ❤️ by [Ecentric](https://ecentric.co.za/)
+### Made with ❤️ by Veritas Quaesitor

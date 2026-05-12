@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VQ Digital Wallet – Google Pay SDK Demo</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self' https://pay.google.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src https://pay.google.com https://google.com https://www.google.com; frame-src https://pay.google.com; img-src 'self' data: https://www.gstatic.com; font-src https://cdn.jsdelivr.net">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+        integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU"
+        crossorigin="anonymous">
+  <style>
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--pico-spacing);
+    }
+    @media (min-width: 768px) {
+      .demo-grid { grid-template-columns: 1fr 1fr; }
+      #section-utils { grid-column: 1 / -1; }
+    }
+
+    #sandbox-banner {
+      background-color: #fff8e1;
+      border: 1px solid #ffc107;
+      border-radius: var(--pico-border-radius);
+      padding: var(--pico-spacing);
+      margin-block: var(--pico-spacing);
+      text-align: center;
+    }
+    #sandbox-banner strong { display: block; margin-bottom: 0.25rem; }
+    #sandbox-banner p { margin: 0; font-size: 0.875rem; color: #5d4037; }
+
+    #init-status { margin-top: 0.75rem; min-height: 2.5rem; font-weight: 500; }
+    .s-ready    { color: #2e7d32; }
+    .s-error    { color: #c62828; }
+    .s-warning  { color: #e65100; }
+    .s-info     { color: #1565c0; }
+
+    #event-log {
+      max-height: 180px;
+      overflow-y: auto;
+      font-size: 0.8rem;
+      padding: 0.25rem 0;
+    }
+    #event-log p {
+      margin: 0;
+      padding: 0.15rem 0;
+      border-bottom: 1px solid var(--pico-muted-border-color);
+    }
+    #event-log p:last-child { border-bottom: none; }
+    #event-log p[data-type="success"] { color: #2e7d32; }
+    #event-log p[data-type="error"]   { color: #c62828; }
+
+    #token-display {
+      word-break: break-all;
+      white-space: pre-wrap;
+      font-size: 0.75rem;
+      max-height: 120px;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    #gpay-button-container { min-height: 48px; margin-block: 0.75rem; }
+
+    output {
+      display: block;
+      margin-top: 0.5rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      color: var(--pico-muted-color);
+    }
+
+    .btn-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .btn-row button { flex: 1; margin: 0; }
+
+    .danger-zone { border-color: #c62828; }
+    .danger-zone legend { color: #c62828; font-weight: 600; }
+
+    .util-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    #copy-token-btn {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+
+    .version-badge {
+      display: inline-block;
+      background: var(--pico-primary);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 1rem;
+      font-family: monospace;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="container">
+    <hgroup>
+      <h1>VQ Digital Wallet</h1>
+      <p>Google Pay SDK v1.1.0 — Interactive Demo &amp; Evaluator Sandbox</p>
+    </hgroup>
+    <div id="sandbox-banner" role="alert">
+      <strong>Google Pay SDK Sandbox</strong>
+      <p>Configure the environment below. In TEST mode no payment is charged and test cards are used.
+         PRODUCTION requires a
+         <a href="https://pay.google.com/business/console" target="_blank" rel="noopener">registered Google Merchant account</a>.
+         For the full button flow, open in Chrome on a device with a Google account linked to Google Pay.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="demo-grid">
+
+      <!-- ══════════════ 1 – SDK SETUP ══════════════ -->
+      <article id="section-setup">
+        <header><h2>1 — SDK Setup</h2></header>
+
+        <form id="config-form">
+          <label>
+            Environment
+            <select id="cfg-environment">
+              <option value="TEST" selected>TEST</option>
+              <option value="PRODUCTION">PRODUCTION</option>
+            </select>
+          </label>
+          <label>
+            Gateway
+            <input type="text" id="cfg-gateway" value="example" placeholder="e.g. example"
+                   maxlength="64" pattern="[^&lt;&gt;&quot;';&amp;]+" required>
+            <small>Max 64 characters. No &lt; &gt; " ' ; &amp; characters allowed.</small>
+          </label>
+          <label>
+            Merchant ID
+            <input type="text" id="cfg-merchant-id" value="12345678901234567890"
+                   placeholder="10–32 alphanumeric chars"
+                   minlength="10" maxlength="32" pattern="[a-zA-Z0-9]{10,32}" required>
+            <small>10–32 alphanumeric characters only (a–z, A–Z, 0–9).</small>
+          </label>
+          <label>
+            Merchant Name
+            <input type="text" id="cfg-merchant-name" value="VQ Demo Store"
+                   placeholder="Display name" maxlength="100" required>
+            <small>Max 100 characters. Special characters (&lt; &gt; " ' ; &amp;) will be stripped.</small>
+          </label>
+          <label>
+            Gateway Merchant ID
+            <input type="text" id="cfg-gateway-merchant-id" value="test_merchant_123"
+                   placeholder="Your gateway merchant ID"
+                   maxlength="128" pattern="[^&lt;&gt;&quot;';&amp;]+" required>
+            <small>Max 128 characters. No &lt; &gt; " ' ; &amp; characters allowed.</small>
+          </label>
+          <fieldset>
+            <legend>Allowed Card Networks</legend>
+            <div style="display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem;">
+              <label style="display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:normal;">
+                <input type="checkbox" id="cn-mastercard" value="MASTERCARD" checked> Mastercard
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:normal;">
+                <input type="checkbox" id="cn-visa" value="VISA" checked> Visa
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:normal;">
+                <input type="checkbox" id="cn-amex" value="AMEX"> American Express
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:normal;">
+                <input type="checkbox" id="cn-discover" value="DISCOVER"> Discover
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:normal;">
+                <input type="checkbox" id="cn-jcb" value="JCB"> JCB
+              </label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Allowed Auth Methods</legend>
+            <div style="display:flex; gap:1.5rem;">
+              <label style="display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:normal;">
+                <input type="checkbox" id="am-pan-only" value="PAN_ONLY" checked> PAN Only
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:normal;">
+                <input type="checkbox" id="am-cryptogram" value="CRYPTOGRAM_3DS" checked> Cryptogram 3DS
+              </label>
+            </div>
+          </fieldset>
+          <div style="display:flex; gap:1rem;">
+            <label style="flex:1">
+              Button Colour
+              <select id="cfg-button-color">
+                <option value="default" selected>default</option>
+                <option value="black">black</option>
+                <option value="white">white</option>
+              </select>
+            </label>
+            <label style="flex:1">
+              Button Type
+              <select id="cfg-button-type">
+                <option value="pay" selected>pay</option>
+                <option value="buy">buy</option>
+                <option value="checkout">checkout</option>
+                <option value="donate">donate</option>
+                <option value="order">order</option>
+                <option value="plain">plain</option>
+                <option value="subscribe">subscribe</option>
+              </select>
+            </label>
+            <label style="flex:1">
+              Size Mode
+              <select id="cfg-button-size-mode">
+                <option value="static" selected>static</option>
+                <option value="fill">fill</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit" id="btn-init">Initialise SDK</button>
+        </form>
+
+        <div id="init-status" aria-live="polite"></div>
+
+        <footer>
+          <small>Pre-filled values are example TEST credentials &mdash; replace with your own for real integration testing.</small>
+          &nbsp;<span class="version-badge">v1.1.0</span>
+        </footer>
+      </article>
+
+      <!-- ══════════════ 2 – PAYMENT DEMO ══════════════ -->
+      <article id="section-payment">
+        <header><h2>2 — Payment Demo</h2></header>
+
+        <label>
+          Amount
+          <input type="number" id="payment-amount" value="99.99"
+                 min="0.01" max="999999.99" step="0.01" placeholder="0.00">
+          <small>Range: 0.01 – 999,999.99. Max two decimal places.</small>
+        </label>
+        <div style="display:flex; gap:1rem;">
+          <label style="flex:1">
+            Currency
+            <select id="payment-currency">
+              <option value="ZAR" selected>ZAR – South African Rand</option>
+              <option value="USD">USD – US Dollar</option>
+              <option value="EUR">EUR – Euro</option>
+              <option value="GBP">GBP – British Pound</option>
+              <option value="AUD">AUD – Australian Dollar</option>
+              <option value="CAD">CAD – Canadian Dollar</option>
+              <option value="SGD">SGD – Singapore Dollar</option>
+              <option value="HKD">HKD – Hong Kong Dollar</option>
+              <option value="JPY">JPY – Japanese Yen</option>
+              <option value="CHF">CHF – Swiss Franc</option>
+              <option value="NZD">NZD – New Zealand Dollar</option>
+              <option value="INR">INR – Indian Rupee</option>
+              <option value="KES">KES – Kenyan Shilling</option>
+              <option value="NGN">NGN – Nigerian Naira</option>
+              <option value="GHS">GHS – Ghanaian Cedi</option>
+            </select>
+          </label>
+          <label style="flex:1">
+            Country Code
+            <select id="payment-country">
+              <option value="ZA" selected>ZA – South Africa</option>
+              <option value="US">US – United States</option>
+              <option value="GB">GB – United Kingdom</option>
+              <option value="AU">AU – Australia</option>
+              <option value="CA">CA – Canada</option>
+              <option value="SG">SG – Singapore</option>
+              <option value="HK">HK – Hong Kong</option>
+              <option value="JP">JP – Japan</option>
+              <option value="CH">CH – Switzerland</option>
+              <option value="NZ">NZ – New Zealand</option>
+              <option value="IN">IN – India</option>
+              <option value="NG">NG – Nigeria</option>
+              <option value="KE">KE – Kenya</option>
+              <option value="GH">GH – Ghana</option>
+            </select>
+          </label>
+        </div>
+
+        <br>
+        <button id="btn-mount" disabled>Mount Google Pay Button</button>
+
+        <div id="gpay-button-container"></div>
+
+        <details open>
+          <summary>Token / Result</summary>
+          <pre id="token-display">Awaiting payment…</pre>
+          <button id="copy-token-btn" class="secondary">Copy Token</button>
+        </details>
+
+        <details open>
+          <summary>Event Log</summary>
+          <div id="event-log" role="log" aria-live="polite">
+            <p data-type="info">[--:--:--] Ready. Initialise the SDK to begin.</p>
+          </div>
+        </details>
+      </article>
+
+      <!-- ══════════════ 3 – UTILITIES ══════════════ -->
+      <article id="section-utils">
+        <header><h2>3 — Utilities</h2></header>
+        <div class="util-grid">
+
+          <fieldset>
+            <legend>Transaction ID</legend>
+            <small>Generate a UUID v4 via <code>generateTransactionId()</code>.</small>
+            <br><br>
+            <button id="btn-gen-txid" disabled>Generate Transaction ID</button>
+            <output id="txid-output" aria-live="polite"></output>
+          </fieldset>
+
+          <fieldset>
+            <legend>Base64 Encode / Decode</legend>
+            <small>Encode: type JSON below → click Encode. Decode: paste a Base64 string below → click Decode.</small>
+            <label>
+              Input (JSON)
+              <textarea id="encode-input" rows="3"
+                        placeholder='{"orderId":"TEST-001","amount":99.99}'>{"orderId":"TEST-001","amount":99.99}</textarea>
+            </label>
+            <div class="btn-row">
+              <button id="btn-encode" disabled>Encode &rarr;</button>
+              <button id="btn-decode" disabled>&larr; Decode</button>
+            </div>
+            <output id="codec-output" aria-live="polite"></output>
+          </fieldset>
+
+          <fieldset>
+            <legend>Session Token</legend>
+            <small>Inspect or clear the token stored in the SDK instance after a successful payment.</small>
+            <br><br>
+            <div class="btn-row">
+              <button id="btn-get-token" disabled>Get Token</button>
+              <button id="btn-clear-token" class="secondary" disabled>Clear Token</button>
+            </div>
+            <output id="session-token-output" aria-live="polite"></output>
+          </fieldset>
+
+          <fieldset class="danger-zone">
+            <legend>Danger Zone</legend>
+            <small>Calls <code>destroy()</code> — clears all state, session token, and the payments client.
+                   Re-initialise before using the SDK again.</small>
+            <br><br>
+            <button id="btn-destroy" class="contrast" disabled>Destroy SDK Instance</button>
+          </fieldset>
+
+        </div>
+      </article>
+
+    </div><!-- .demo-grid -->
+  </main>
+
+  <footer class="container">
+    <small>
+      vq-digitalwallet-google v1.1.0 &middot; MIT License &middot;
+      <a href="https://developers.google.com/pay/api" target="_blank" rel="noopener">Google Pay API Docs</a>
+    </small>
+  </footer>
+
+  <script src="../vqdigitalwalletgoogle.js"></script>
+  <script>
+    'use strict';
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    var sdk   = null;
+    var state = 'idle'; // idle | initialising | ready | not-available | error | destroyed
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function log(msg, type) {
+      type = type || 'info';
+      var el = document.createElement('p');
+      el.dataset.type = type;
+      el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+      var logEl = document.getElementById('event-log');
+      logEl.prepend(el);
+      while (logEl.children.length > 50) logEl.removeChild(logEl.lastChild);
+    }
+
+    function setState(newState, message) {
+      state = newState;
+
+      var btnInit      = document.getElementById('btn-init');
+      var btnMount     = document.getElementById('btn-mount');
+      var utilBtns     = [
+        document.getElementById('btn-gen-txid'),
+        document.getElementById('btn-encode'),
+        document.getElementById('btn-decode'),
+        document.getElementById('btn-get-token'),
+        document.getElementById('btn-clear-token'),
+        document.getElementById('btn-destroy')
+      ];
+
+      btnInit.disabled  = false;
+      btnMount.disabled = true;
+      utilBtns.forEach(function(b) { b.disabled = true; });
+
+      var statusCls  = '';
+      var statusText = '';
+
+      switch (newState) {
+        case 'idle':
+          btnInit.textContent = 'Initialise SDK';
+          statusCls  = 's-info';
+          statusText = 'Not initialised.';
+          break;
+
+        case 'initialising':
+          btnInit.disabled    = true;
+          btnInit.textContent = 'Initialising…';
+          statusCls  = 's-info';
+          statusText = 'Connecting to Google Pay…';
+          break;
+
+        case 'ready':
+          btnInit.disabled    = true;
+          btnInit.textContent = 'Initialised';
+          btnMount.disabled   = false;
+          utilBtns.forEach(function(b) { b.disabled = false; });
+          statusCls  = 's-ready';
+          statusText = '✓ Google Pay is ready.';
+          break;
+
+        case 'not-available':
+          btnInit.textContent = 'Re-initialise SDK';
+          utilBtns.forEach(function(b) { b.disabled = false; });
+          statusCls  = 's-warning';
+          statusText = '⚠ Google Pay is not available on this device or browser. ' +
+            'Utilities still work. For the full button flow, open in Chrome with a Google account linked to Google Pay.';
+          break;
+
+        case 'error':
+          btnInit.textContent = 'Retry';
+          statusCls  = 's-error';
+          statusText = '✗ ' + (message || 'Initialisation failed — see event log.');
+          break;
+
+        case 'destroyed':
+          btnInit.textContent = 'Initialise SDK';
+          statusCls  = 's-info';
+          statusText = 'SDK destroyed. Initialise to start again.';
+          break;
+      }
+
+      var statusEl = document.getElementById('init-status');
+      statusEl.textContent = '';
+      var span = document.createElement('span');
+      span.className   = statusCls;
+      span.textContent = statusText;
+      statusEl.appendChild(span);
+    }
+
+    function handleToken(token, error) {
+      var display = document.getElementById('token-display');
+      var copyBtn = document.getElementById('copy-token-btn');
+
+      if (error) {
+        var isCancelled = error.statusCode === 'CANCELED' ||
+          (error.message && error.message.toLowerCase().indexOf('cancel') !== -1);
+        if (isCancelled) {
+          display.textContent = 'Payment dismissed by user.';
+          log('Payment sheet dismissed by user.', 'info');
+        } else {
+          display.textContent = 'Error: ' + error.message;
+          log('Payment failed: ' + error.message, 'error');
+        }
+        copyBtn.style.display = 'none';
+      } else {
+        display.textContent = 'Token (base64):\n' + token;
+        copyBtn.style.display = 'inline-block';
+        copyBtn._fullToken = token;
+        log('Token generated successfully (' + token.length + ' chars).', 'success');
+      }
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function getCheckedValues() {
+      var ids = Array.prototype.slice.call(arguments);
+      return ids
+        .map(function(id) { return document.getElementById(id); })
+        .filter(function(el) { return el && el.checked; })
+        .map(function(el) { return el.value; });
+    }
+
+    // ── SDK Initialise ─────────────────────────────────────────────────────────
+    document.getElementById('config-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      var gateway           = document.getElementById('cfg-gateway').value.trim();
+      var merchantId        = document.getElementById('cfg-merchant-id').value.trim();
+      var merchantName      = document.getElementById('cfg-merchant-name').value.trim();
+      var gatewayMerchantId = document.getElementById('cfg-gateway-merchant-id').value.trim();
+      var buttonColor = document.getElementById('cfg-button-color').value;
+
+      if (sdk !== null) {
+        try { sdk.destroy(); } catch (ignore) {}
+        sdk = null;
+      }
+      document.getElementById('gpay-button-container').innerHTML = '';
+      document.getElementById('token-display').textContent = 'Awaiting payment…';
+      document.getElementById('copy-token-btn').style.display = 'none';
+
+      setState('initialising');
+      log('Constructing SDK instance…', 'info');
+
+      try {
+        sdk = VqDigitalWalletGoogle({
+          environment:            document.getElementById('cfg-environment').value,
+          gateway:                gateway,
+          merchantId:             merchantId,
+          merchantName:           merchantName,
+          gatewayMerchantId:      gatewayMerchantId,
+          buttonColor:            buttonColor,
+          buttonType:             document.getElementById('cfg-button-type').value,
+          buttonSizeMode:         document.getElementById('cfg-button-size-mode').value,
+          allowedCardNetworks:    getCheckedValues('cn-mastercard', 'cn-visa', 'cn-amex', 'cn-discover', 'cn-jcb'),
+          allowedCardAuthMethods: getCheckedValues('am-pan-only', 'am-cryptogram'),
+          onTokenGenerated:       handleToken
+        });
+      } catch (err) {
+        setState('error', err.message);
+        log('Config error: ' + err.message, 'error');
+        return;
+      }
+
+      log('SDK created. Loading Google Pay script…', 'info');
+
+      sdk.initialize()
+        .then(function(isReady) {
+          if (isReady) {
+            setState('ready');
+            log('Google Pay initialised and ready.', 'success');
+          } else {
+            setState('not-available');
+            log('Google Pay not available on this device/browser.', 'info');
+          }
+        })
+        .catch(function(err) {
+          setState('error', err.message);
+          log('Initialisation failed: ' + err.message, 'error');
+        });
+    });
+
+    // ── Mount Button ───────────────────────────────────────────────────────────
+    document.getElementById('btn-mount').addEventListener('click', function() {
+      if (state !== 'ready') return;
+
+      var amountVal = parseFloat(document.getElementById('payment-amount').value);
+      if (isNaN(amountVal) || amountVal <= 0) {
+        log('Invalid amount. Enter a positive number.', 'error');
+        return;
+      }
+
+      document.getElementById('gpay-button-container').innerHTML = '';
+
+      try {
+        sdk.createButton('gpay-button-container', {
+          amount:      amountVal,
+          currency:    document.getElementById('payment-currency').value,
+          countryCode: document.getElementById('payment-country').value
+        });
+        var currency = document.getElementById('payment-currency').value;
+        log('Google Pay button mounted for ' + currency + ' ' + amountVal.toFixed(2) + '.', 'success');
+      } catch (err) {
+        log('createButton failed: ' + err.message, 'error');
+      }
+    });
+
+    // ── Copy Token ─────────────────────────────────────────────────────────────
+    document.getElementById('copy-token-btn').addEventListener('click', function() {
+      var token = this._fullToken;
+      if (!token) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(token)
+          .then(function() { log('Token copied to clipboard.', 'success'); })
+          .catch(function() { log('Copy failed — clipboard access denied.', 'error'); });
+      } else {
+        log('Clipboard API not available in this browser.', 'error');
+      }
+    });
+
+    // ── Generate Transaction ID ────────────────────────────────────────────────
+    document.getElementById('btn-gen-txid').addEventListener('click', function() {
+      if (!sdk) { log('Initialise the SDK first.', 'error'); return; }
+      try {
+        var id = sdk.generateTransactionId();
+        document.getElementById('txid-output').textContent = id;
+        log('Transaction ID: ' + id, 'info');
+      } catch (err) {
+        log('generateTransactionId failed: ' + err.message, 'error');
+      }
+    });
+
+    // ── Encode ─────────────────────────────────────────────────────────────────
+    document.getElementById('btn-encode').addEventListener('click', function() {
+      if (!sdk) { log('Initialise the SDK first.', 'error'); return; }
+      var input = document.getElementById('encode-input').value;
+      if (!input.trim()) { log('Encode input is empty.', 'error'); return; }
+      try {
+        var encoded = sdk.encodePayloadToBase64(input);
+        document.getElementById('codec-output').textContent = encoded;
+        log('Encoded to base64 (' + encoded.length + ' chars).', 'info');
+      } catch (err) {
+        log('Encode failed: ' + err.message, 'error');
+      }
+    });
+
+    // ── Decode ─────────────────────────────────────────────────────────────────
+    document.getElementById('btn-decode').addEventListener('click', function() {
+      if (!sdk) { log('Initialise the SDK first.', 'error'); return; }
+      var b64 = document.getElementById('encode-input').value.trim();
+      if (!b64) { log('Decode input is empty — paste a Base64 string into the Input field.', 'error'); return; }
+      try {
+        var obj = sdk.decodePayloadFromBase64(b64);
+        document.getElementById('codec-output').textContent = JSON.stringify(obj, null, 2);
+        log('Decoded from base64.', 'info');
+      } catch (err) {
+        document.getElementById('codec-output').textContent = 'Error: ' + err.message;
+        log('Decode failed: ' + err.message, 'error');
+      }
+    });
+
+    // ── Session Token ──────────────────────────────────────────────────────────
+    document.getElementById('btn-get-token').addEventListener('click', function() {
+      if (!sdk) { log('Initialise the SDK first.', 'error'); return; }
+      var token = sdk.getSessionToken();
+      var out = document.getElementById('session-token-output');
+      if (token) {
+        out.textContent = token.length > 60 ? token.substring(0, 60) + '…' : token;
+        log('Session token retrieved (' + token.length + ' chars).', 'info');
+      } else {
+        out.textContent = '(none)';
+        log('No session token stored.', 'info');
+      }
+    });
+
+    document.getElementById('btn-clear-token').addEventListener('click', function() {
+      if (!sdk) { log('Initialise the SDK first.', 'error'); return; }
+      sdk.clearSessionToken();
+      document.getElementById('session-token-output').textContent = '(cleared)';
+      log('Session token cleared.', 'info');
+    });
+
+    // ── Destroy ────────────────────────────────────────────────────────────────
+    document.getElementById('btn-destroy').addEventListener('click', function() {
+      if (!confirm('Destroy SDK instance?\n\nAll state will be cleared. You must re-initialise before using the SDK again.')) return;
+      try { sdk.destroy(); } catch (ignore) {}
+      sdk = null;
+      setState('destroyed');
+      document.getElementById('gpay-button-container').innerHTML = '';
+      document.getElementById('token-display').textContent = 'SDK destroyed.';
+      document.getElementById('copy-token-btn').style.display = 'none';
+      document.getElementById('txid-output').textContent      = '';
+      document.getElementById('codec-output').textContent     = '';
+      document.getElementById('session-token-output').textContent = '';
+      log('SDK instance destroyed.', 'error');
+    });
+
+    // ── Boot ───────────────────────────────────────────────────────────────────
+    setState('idle');
+  </script>
+
+</body>
+</html>

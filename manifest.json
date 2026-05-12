@@ -1,6 +1,6 @@
 {
-  "name": "Ecentric Test",
-  "short_name": "ECT",
+  "name": "VQ Digital Wallet",
+  "short_name": "VQDW",
   "start_url": "/",
   "display": "standalone"
 }

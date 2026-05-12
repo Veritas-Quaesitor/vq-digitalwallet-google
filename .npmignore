@@ -32,9 +32,11 @@ npm-debug.log*
 # Coverage
 coverage/
 
-# Build artifacts
-dist/
-build/
+# Demo (not for npm consumers)
+demo/
+
+# Claude session files
+.claude/
 
 # Development dependencies
 node_modules/

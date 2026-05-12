@@ -1,12 +1,21 @@
 {
-  "name": "ecentric-googlepay-clientsdk",
+  "name": "vq-digitalwallet-google",
   "version": "1.1.0",
   "description": "A lightweight client SDK for initiating secure payment requests with Google Pay, featuring enterprise-grade security and rate limiting.",
-  "main": "epsgooglepay.js",
-  "types": "epsgooglepay.d.ts",
+  "main": "vqdigitalwalletgoogle.js",
+  "module": "dist/vqdigitalwalletgoogle.min.js",
+  "types": "vqdigitalwalletgoogle.d.ts",
+  "exports": {
+    ".": {
+      "require": "./vqdigitalwalletgoogle.js",
+      "import": "./dist/vqdigitalwalletgoogle.min.js",
+      "types": "./vqdigitalwalletgoogle.d.ts"
+    }
+  },
   "files": [
-    "epsgooglepay.js",
-    "epsgooglepay.d.ts",
+    "vqdigitalwalletgoogle.js",
+    "dist/vqdigitalwalletgoogle.min.js",
+    "vqdigitalwalletgoogle.d.ts",
     "README.md",
     "LICENSE"
   ],
@@ -27,16 +36,9 @@
     "clean": "rimraf dist/",
     "prepublishOnly": "npm run clean && npm run build && npm test && npm run lint"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://dev.azure.com/epsdev/OnlinePayments/_git/Ecentric.GooglePay.ClientSdk"
-  },
-  "homepage": "https://dev.azure.com/epsdev/OnlinePayments/_git/Ecentric.GooglePay.ClientSdk",
-  "bugs": {
-    "url": "https://dev.azure.com/epsdev/OnlinePayments/_git/Ecentric.GooglePay.ClientSdk/issues"
-  },
   "keywords": [
-    "ecentric",
+    "vq",
+    "veritas-quaesitor",
     "googlepay",
     "google-pay",
     "digitalwallets",
@@ -49,11 +51,12 @@
     "browser",
     "enterprise"
   ],
-  "author": {
-    "name": "Francois van Eeden",
-    "company": "Ecentric"
-  },
+  "author": "Veritas Quaesitor",
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/preset-env": "^7.28.5",

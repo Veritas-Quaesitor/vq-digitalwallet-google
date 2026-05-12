@@ -1,13 +1,33 @@
 /**
- * TypeScript definitions for Ecentric Google Pay Client SDK
+ * TypeScript definitions for VQ Digital Wallet Google Pay SDK
  * @version 1.1.0
- * @author Ecentric
+ * @author Veritas Quaesitor
  */
 
 /**
- * Configuration object for EpsGooglePay initialization
+ * Tokenization data returned inside a Google Pay payment response
  */
-export interface EpsGooglePayConfig {
+export interface GooglePayTokenizationData {
+  type: string;
+  token: string;
+}
+
+/**
+ * Shape of the raw payment data object returned by the Google Pay API
+ */
+export interface GooglePaymentData {
+  paymentMethodData: {
+    type: string;
+    description: string;
+    info: Record<string, unknown>;
+    tokenizationData: GooglePayTokenizationData;
+  };
+}
+
+/**
+ * Configuration object for VqDigitalWalletGoogle initialization
+ */
+export interface VqDigitalWalletGoogleConfig {
   /** Google Pay environment ('TEST' or 'PRODUCTION') */
   environment: 'TEST' | 'PRODUCTION';
   /** Payment gateway identifier */
@@ -79,7 +99,7 @@ export interface ErrorInfo {
 /**
  * Default configuration values
  */
-export interface EpsGooglePayDefaults {
+export interface VqDigitalWalletGoogleDefaults {
   environment: string;
   gateway: string;
   merchantId: string;
@@ -95,34 +115,34 @@ export interface EpsGooglePayDefaults {
 }
 
 /**
- * Main EpsGooglePay class
+ * Main VqDigitalWalletGoogle class
  */
-export interface EpsGooglePay {
+export interface VqDigitalWalletGoogle {
   /** SDK version */
   readonly version: string;
   /** Configuration object */
-  readonly config: EpsGooglePayConfig;
+  readonly config: VqDigitalWalletGoogleConfig;
   /** Google Pay client instance */
-  readonly paymentsClient: any;
+  readonly paymentsClient: object | null;
   /** Whether Google Pay is ready for payments */
   readonly isReadyToPay: boolean;
   /** Current session token */
   readonly sessionToken: string | null;
 
   /**
-   * Initialize EpsGooglePay instance
+   * Initialize VqDigitalWalletGoogle instance
    * @param config Configuration object
    * @returns This instance for chaining
    * @throws When browser support is insufficient or configuration is invalid
    */
-  init(config: EpsGooglePayConfig): EpsGooglePay;
+  init(config: VqDigitalWalletGoogleConfig): VqDigitalWalletGoogle;
 
   /**
    * Validate configuration object
    * @param config Configuration to validate
    * @throws When configuration is invalid
    */
-  validateConfig(config: EpsGooglePayConfig): void;
+  validateConfig(config: VqDigitalWalletGoogleConfig): void;
 
   /**
    * Log error with context and metadata
@@ -175,13 +195,13 @@ export interface EpsGooglePay {
    * @param paymentData Payment data
    * @returns Google Pay payment data request
    */
-  buildPaymentDataRequest(paymentData: PaymentData): any;
+  buildPaymentDataRequest(paymentData: PaymentData): Record<string, unknown>;
 
   /**
    * Get base payment data request structure
    * @returns Base payment data request object
    */
-  getBasePaymentDataRequest(): any;
+  getBasePaymentDataRequest(): Record<string, unknown>;
 
   /**
    * Process payment data from Google Pay and generate token
@@ -189,7 +209,7 @@ export interface EpsGooglePay {
    * @returns Promise resolving to payment result
    * @throws When token processing fails
    */
-  processPayment(paymentData: any): Promise<PaymentResult>;
+  processPayment(paymentData: GooglePaymentData): Promise<PaymentResult>;
 
   /**
    * Invoke callback function with token or error
@@ -212,7 +232,7 @@ export interface EpsGooglePay {
    * @returns Decoded object
    * @throws When decoding fails or payload is invalid
    */
-  decodePayloadFromBase64(base64EncodedPayload: string): any;
+  decodePayloadFromBase64(base64EncodedPayload: string): Record<string, unknown>;
 
   /**
    * Store session token
@@ -244,31 +264,31 @@ export interface EpsGooglePay {
 }
 
 /**
- * EpsGooglePay constructor interface
+ * VqDigitalWalletGoogle constructor interface
  */
-export interface EpsGooglePayConstructor {
+export interface VqDigitalWalletGoogleConstructor {
   /**
-   * Create new EpsGooglePay instance
+   * Create new VqDigitalWalletGoogle instance
    * @param config Configuration object
-   * @returns New EpsGooglePay instance
+   * @returns New VqDigitalWalletGoogle instance
    */
-  new (config: EpsGooglePayConfig): EpsGooglePay;
-  (config: EpsGooglePayConfig): EpsGooglePay;
+  new (config: VqDigitalWalletGoogleConfig): VqDigitalWalletGoogle;
+  (config: VqDigitalWalletGoogleConfig): VqDigitalWalletGoogle;
 
   /** SDK version */
   readonly version: string;
   /** Default configuration values */
-  readonly defaults: EpsGooglePayDefaults;
+  readonly defaults: VqDigitalWalletGoogleDefaults;
 
   /**
-   * Restore previous EpsGooglePay and return this instance
-   * @returns EpsGooglePay constructor
+   * Restore previous VqDigitalWalletGoogle and return this instance
+   * @returns VqDigitalWalletGoogle constructor
    */
-  noConflict(): EpsGooglePayConstructor;
+  noConflict(): VqDigitalWalletGoogleConstructor;
 }
 
 /**
- * Main export - EpsGooglePay constructor
+ * Main export - VqDigitalWalletGoogle constructor
  */
-declare const EpsGooglePay: EpsGooglePayConstructor;
-export default EpsGooglePay;
+declare const VqDigitalWalletGoogle: VqDigitalWalletGoogleConstructor;
+export default VqDigitalWalletGoogle;

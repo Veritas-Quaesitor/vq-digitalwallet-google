@@ -22,22 +22,22 @@ const babelConfig = {
 
 module.exports = [
   {
-    input: 'src/epsgooglepay.js',
+    input: 'src/vqdigitalwalletgoogle.js',
     output: {
-      file: 'epsgooglepay.js',
+      file: 'vqdigitalwalletgoogle.js',
       format: 'iife',
-      name: 'EpsGooglePay',
+      name: 'VqDigitalWalletGoogle',
       banner
     },
     context: 'window',
     plugins: [nodeResolve(), babel(babelConfig)]
   },
   {
-    input: 'src/epsgooglepay.js',
+    input: 'src/vqdigitalwalletgoogle.js',
     output: {
-      file: 'dist/epsgooglepay.min.js',
+      file: 'dist/vqdigitalwalletgoogle.min.js',
       format: 'umd',
-      name: 'EpsGooglePay',
+      name: 'VqDigitalWalletGoogle',
       banner
     },
     context: 'window',

@@ -1,9 +1,6 @@
 # Dependencies
 node_modules/
 
-# Documentation
-docs/
-
 # Build outputs
 dist/
 
@@ -15,12 +12,20 @@ dist/
 # IDE files
 .vscode/
 .idea/
+
+# Claude Code local config
+.claude/
 *.swp
 *.swo
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Test artifacts
+coverage/
+__snapshots__/
+.eslintcache
 
 # Logs
 *.log

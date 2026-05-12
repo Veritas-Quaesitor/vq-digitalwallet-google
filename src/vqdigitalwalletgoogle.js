@@ -1,10 +1,10 @@
 /**
- * @fileoverview Google Pay for Ecentric - Enhanced Security & Enterprise Edition
+ * @fileoverview VQ Digital Wallet - Google Pay SDK - Enhanced Security & Enterprise Edition
  * A comprehensive Google Pay integration library providing secure payment processing
  * with enterprise-grade features including rate limiting, session management, and robust error handling.
- * 
+ *
  * @version 1.1.0
- * @author Ecentric
+ * @author Veritas Quaesitor
  * @license MIT
  * @compliance Google Pay API specification aligned
  * @since 1.0.0
@@ -30,7 +30,7 @@
      * @constant {string}
      * @default "1.0.0"
      */
-    var version = "1.0.0";
+    var version = "1.1.0";
 
     /**
      * Google Pay API version
@@ -53,17 +53,15 @@
     var VALID_ENVIRONMENTS = ['TEST', 'PRODUCTION'];
 
     /**
-     * Rate limiting variables
+     * Rate limiting constants
      * @private
      */
-    var requestCount = 0;
-    var lastRequestTime = 0;
     var MAX_REQUESTS_PER_SECOND = 3;
     var REQUEST_COOLDOWN = 1000;
 
     /**
      * Default configuration object
-     * @typedef {Object} EpsGooglePayDefaults
+     * @typedef {Object} VqDigitalWalletGoogleDefaults
      * @property {string} environment - Google Pay environment ('TEST' or 'PRODUCTION')
      * @property {string} gateway - Payment gateway identifier
      * @property {string} merchantId - Google Pay merchant ID
@@ -96,11 +94,15 @@
      * Supported currencies for Google Pay transactions
      * @constant {string[]}
      */
-    var VALID_CURRENCIES = ['ZAR'];
+    var VALID_CURRENCIES = [
+        'AED', 'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'DKK', 'EGP', 'EUR',
+        'GBP', 'GHS', 'HKD', 'INR', 'JPY', 'KES', 'MXN', 'NGN', 'NOK',
+        'NZD', 'SEK', 'SGD', 'USD', 'ZAR'
+    ];
 
     /**
-     * Configuration object for EpsGooglePay initialization
-     * @typedef {Object} EpsGooglePayConfig
+     * Configuration object for VqDigitalWalletGoogle initialization
+     * @typedef {Object} VqDigitalWalletGoogleConfig
      * @property {string} environment - Google Pay environment ('TEST' or 'PRODUCTION')
      * @property {string} gateway - Payment gateway identifier
      * @property {string} merchantId - Google Pay merchant ID (10-32 alphanumeric characters)
@@ -154,6 +156,7 @@
         sources.forEach(function (source) {
             if (source) {
                 Object.keys(source).forEach(function (key) {
+                    if (key === '__proto__' || key === 'constructor' || key === 'prototype') return;
                     target[key] = source[key];
                 });
             }
@@ -276,7 +279,7 @@
      * @returns {string} Normalized JSON string
      */
     function normalizeGooglePayToken(rawToken) {
-        const jsonString = typeof rawToken === 'string' ? rawToken : JSON.stringify(rawToken);
+        var jsonString = typeof rawToken === 'string' ? rawToken : JSON.stringify(rawToken);
         return jsonString.startsWith('"') ? jsonString : JSON.stringify(jsonString);
     }
 
@@ -320,12 +323,12 @@
     }
 
     /**
-     * EpsGooglePay main constructor function
+     * VqDigitalWalletGoogle main constructor function
      * @class
-     * @param {EpsGooglePayConfig} config - Configuration object
-     * @returns {EpsGooglePay} New EpsGooglePay instance
+     * @param {VqDigitalWalletGoogleConfig} config - Configuration object
+     * @returns {VqDigitalWalletGoogle} New VqDigitalWalletGoogle instance
      * @example
-     * const googlePay = EpsGooglePay({
+     * const googlePay = VqDigitalWalletGoogle({
      *   environment: 'TEST',
      *   gateway: 'example',
      *   merchantId: 'BCR2DN4T23YWKJHG',
@@ -342,19 +345,19 @@
      *   }
      * });
      */
-    var EpsGooglePay = function (config) {
-        return new EpsGooglePay.fn.init(config);
+    var VqDigitalWalletGoogle = function (config) {
+        return new VqDigitalWalletGoogle.fn.init(config);
     };
 
-    EpsGooglePay.fn = EpsGooglePay.prototype = {
-        constructor: EpsGooglePay,
+    VqDigitalWalletGoogle.fn = VqDigitalWalletGoogle.prototype = {
+        constructor: VqDigitalWalletGoogle,
         version: version,
 
         /**
-         * Initialize EpsGooglePay instance
-         * @memberof EpsGooglePay
-         * @param {EpsGooglePayConfig} config - Configuration object
-         * @returns {EpsGooglePay} This instance for chaining
+         * Initialize VqDigitalWalletGoogle instance
+         * @memberof VqDigitalWalletGoogle
+         * @param {VqDigitalWalletGoogleConfig} config - Configuration object
+         * @returns {VqDigitalWalletGoogle} This instance for chaining
          * @throws {Error} When browser support is insufficient or configuration is invalid
          */
         init: function (config) {
@@ -364,6 +367,8 @@
             this.paymentsClient = null;
             this.isReadyToPay = false;
             this.sessionToken = null;
+            this._requestCount = 0;
+            this._lastRequestTime = 0;
 
             this.validateConfig(this.config);
 
@@ -372,8 +377,8 @@
 
         /**
          * Validate configuration object
-         * @memberof EpsGooglePay
-         * @param {EpsGooglePayConfig} config - Configuration to validate
+         * @memberof VqDigitalWalletGoogle
+         * @param {VqDigitalWalletGoogleConfig} config - Configuration to validate
          * @throws {Error} When configuration is invalid
          */
         validateConfig: function (config) {
@@ -385,12 +390,35 @@
                 throw new Error('Invalid environment. Must be TEST or PRODUCTION');
             }
 
+            var VALID_BUTTON_COLORS = ['default', 'black', 'white'];
+            var VALID_BUTTON_TYPES  = ['book', 'buy', 'checkout', 'donate', 'order', 'pay', 'plain', 'subscribe'];
+            var VALID_SIZE_MODES    = ['static', 'fill'];
+
+            if (VALID_BUTTON_COLORS.indexOf(config.buttonColor) === -1) {
+                throw new Error('Invalid buttonColor. Must be: default, black, or white');
+            }
+            if (VALID_BUTTON_TYPES.indexOf(config.buttonType) === -1) {
+                throw new Error('Invalid buttonType. Must be one of: book, buy, checkout, donate, order, pay, plain, subscribe');
+            }
+            if (VALID_SIZE_MODES.indexOf(config.buttonSizeMode) === -1) {
+                throw new Error('Invalid buttonSizeMode. Must be: static or fill');
+            }
+            if (typeof config.scriptLoadTimeout !== 'number' || config.scriptLoadTimeout <= 0) {
+                throw new Error('scriptLoadTimeout must be a positive number');
+            }
+            if (!Array.isArray(config.allowedCardNetworks) || config.allowedCardNetworks.length === 0) {
+                throw new Error('allowedCardNetworks must be a non-empty array');
+            }
+            if (!Array.isArray(config.allowedCardAuthMethods) || config.allowedCardAuthMethods.length === 0) {
+                throw new Error('allowedCardAuthMethods must be a non-empty array');
+            }
+
             config.merchantName = sanitizeConfigString(config.merchantName, 100);
         },
 
         /**
          * Log error with context and metadata
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {string} message - Error message
          * @param {Error} [error] - Error object
          * @param {string} [context='general'] - Context where error occurred
@@ -408,12 +436,12 @@
             };
 
             if (this.config.environment === 'TEST') {
-                console.error('EpsGooglePay Error:', errorInfo);
+                console.error('VqDigitalWalletGoogle Error:', errorInfo);
                 if (error && error.stack) {
                     console.error('Stack trace:', error.stack);
                 }
             } else {
-                console.error('EpsGooglePay Error:', errorInfo.message);
+                console.error('VqDigitalWalletGoogle Error:', errorInfo.message);
             }
 
             return errorInfo;
@@ -421,7 +449,7 @@
 
         /**
          * Check and enforce rate limiting
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @throws {Error} When rate limit is exceeded
          * @example
          * try {
@@ -432,20 +460,20 @@
          */
         checkRateLimit: function () {
             var now = Date.now();
-            if (now - lastRequestTime < REQUEST_COOLDOWN) {
-                requestCount++;
-                if (requestCount > MAX_REQUESTS_PER_SECOND) {
+            if (now - this._lastRequestTime < REQUEST_COOLDOWN) {
+                this._requestCount++;
+                if (this._requestCount > MAX_REQUESTS_PER_SECOND) {
                     throw new Error('Too many payment requests. Please wait before trying again.');
                 }
             } else {
-                requestCount = 1;
+                this._requestCount = 1;
             }
-            lastRequestTime = now;
+            this._lastRequestTime = now;
         },
 
         /**
          * Initialize Google Pay API and check readiness
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @returns {Promise<boolean>} Promise resolving to readiness status
          * @throws {Error} When initialization fails
          * @example
@@ -481,7 +509,7 @@
 
         /**
          * Check if Google Pay is ready for payments
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @returns {Promise<boolean>} Promise resolving to readiness status
          * @private
          */
@@ -494,17 +522,17 @@
                     if (!response.result) {
                         if (self.config.allowedCardAuthMethods.length === 1 &&
                             self.config.allowedCardAuthMethods[0] === 'CRYPTOGRAM_3DS') {
-                            console.warn('EpsGooglePay: Google Pay not available - CRYPTOGRAM_3DS requires device/card network support. Consider adding PAN_ONLY for broader compatibility.');
+                            console.warn('VqDigitalWalletGoogle: Google Pay not available - CRYPTOGRAM_3DS requires device/card network support. Consider adding PAN_ONLY for broader compatibility.');
                         }
                         else if (self.config.allowedCardNetworks.length === 0) {
-                            console.warn('EpsGooglePay: Google Pay not available - No card networks specified.');
+                            console.warn('VqDigitalWalletGoogle: Google Pay not available - No card networks specified.');
                         }
                         else {
-                            console.warn('EpsGooglePay: Google Pay not available on this device/browser. Check merchant configuration or device compatibility.');
+                            console.warn('VqDigitalWalletGoogle: Google Pay not available on this device/browser. Check merchant configuration or device compatibility.');
                         }
                     } else {
                         if (self.config.environment === 'TEST') {
-                            console.log('EpsGooglePay: Google Pay ready with auth methods:', self.config.allowedCardAuthMethods);
+                            console.log('VqDigitalWalletGoogle: Google Pay ready with auth methods:', self.config.allowedCardAuthMethods);
                         }
                     }
 
@@ -512,12 +540,12 @@
                     return response.result;
                 })
                 .catch(function (err) {
-                    console.error('EpsGooglePay: Error checking Google Pay availability:', err);
+                    console.error('VqDigitalWalletGoogle: Error checking Google Pay availability:', err);
 
                     if (err.message && err.message.includes('merchantId')) {
-                        console.error('EpsGooglePay: Check your merchantId configuration');
+                        console.error('VqDigitalWalletGoogle: Check your merchantId configuration');
                     } else if (err.message && err.message.includes('gateway')) {
-                        console.error('EpsGooglePay: Check your gateway configuration');
+                        console.error('VqDigitalWalletGoogle: Check your gateway configuration');
                     }
 
                     return false;
@@ -526,7 +554,7 @@
 
         /**
          * Create Google Pay button and attach to container
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {string|HTMLElement} container - Container element or ID
          * @param {PaymentData} paymentData - Payment data for the transaction
          * @returns {HTMLElement} Created button element
@@ -578,7 +606,7 @@
 
         /**
          * Validate payment data object
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {PaymentData} paymentData - Payment data to validate
          * @throws {Error} When payment data is invalid
          * @example
@@ -617,7 +645,7 @@
 
         /**
          * Request payment from Google Pay
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {PaymentData} paymentData - Payment data for the transaction
          * @returns {Promise<PaymentResult>} Promise resolving to payment result
          * @throws {Error} When payment request fails or rate limit is exceeded
@@ -657,7 +685,7 @@
 
         /**
          * Build Google Pay payment data request object
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {PaymentData} paymentData - Payment data
          * @returns {Object} Google Pay payment data request
          * @example
@@ -689,7 +717,7 @@
 
         /**
          * Get base payment data request structure
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @returns {Object} Base payment data request object
          * @example
          * const baseRequest = googlePay.getBasePaymentDataRequest();
@@ -717,7 +745,7 @@
 
         /**
          * Process payment data from Google Pay and generate token
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {Object} paymentData - Payment data from Google Pay
          * @returns {Promise<PaymentResult>} Promise resolving to payment result
          * @throws {Error} When token processing fails
@@ -733,11 +761,11 @@
         processPayment: function (paymentData) {
             try {
 
-                const rawToken = paymentData.paymentMethodData.tokenizationData.token;
+                var rawToken = paymentData.paymentMethodData.tokenizationData.token;
 
-                const tokenString = normalizeGooglePayToken(rawToken);
+                var tokenString = normalizeGooglePayToken(rawToken);
 
-                const base64 = btoa(tokenString);
+                var base64 = btoa(tokenString);
 
                 if (isNullOrEmpty(base64) || !isValidBase64(base64)) {
                     throw new Error('Failed to generate valid Google Pay token');
@@ -762,7 +790,7 @@
 
         /**
          * Invoke callback function with token or error
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {string|null} token - Generated token or null if error
          * @param {Error} [error] - Error object if processing failed
          * @example
@@ -789,7 +817,7 @@
 
         /**
          * Encode payload to Base64
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {string} tokenizationData - Data to encode
          * @returns {string} Base64 encoded string
          * @throws {Error} When encoding fails
@@ -811,7 +839,7 @@
 
         /**
          * Decode Base64 payload to object
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {string} base64EncodedPayload - Base64 encoded payload
          * @returns {Object} Decoded object
          * @throws {Error} When decoding fails or payload is invalid
@@ -838,7 +866,7 @@
 
         /**
          * Store session token
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @param {string} token - Token to store
          * @example
          * googlePay.storeSessionToken('abc123token');
@@ -849,7 +877,7 @@
 
         /**
          * Get stored session token
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @returns {string|null} Stored token or null if none exists
          * @example
          * const token = googlePay.getSessionToken();
@@ -863,7 +891,7 @@
 
         /**
          * Clear stored session token
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @example
          * googlePay.clearSessionToken();
          */
@@ -873,7 +901,7 @@
 
         /**
          * Generate unique transaction ID (UUID v4)
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @returns {string} UUID v4 transaction ID
          * @example
          * const transactionId = googlePay.generateTransactionId();
@@ -913,7 +941,7 @@
 
         /**
          * Destroy instance and cleanup resources
-         * @memberof EpsGooglePay
+         * @memberof VqDigitalWalletGoogle
          * @example
          * // Clean up when done
          * googlePay.destroy();
@@ -923,52 +951,51 @@
             this.paymentsClient = null;
             this.config = null;
             this.isReadyToPay = false;
-
-            requestCount = 0;
-            lastRequestTime = 0;
+            this._requestCount = 0;
+            this._lastRequestTime = 0;
         }
     };
 
-    EpsGooglePay.fn.init.prototype = EpsGooglePay.fn;
+    VqDigitalWalletGoogle.fn.init.prototype = VqDigitalWalletGoogle.fn;
 
     /**
      * SDK version
-     * @memberof EpsGooglePay
+     * @memberof VqDigitalWalletGoogle
      * @static
      * @type {string}
      * @readonly
      */
-    EpsGooglePay.version = version;
+    VqDigitalWalletGoogle.version = version;
 
     /**
      * Default configuration values
-     * @memberof EpsGooglePay
+     * @memberof VqDigitalWalletGoogle
      * @static
-     * @type {EpsGooglePayDefaults}
+     * @type {VqDigitalWalletGoogleDefaults}
      * @readonly
      */
-    EpsGooglePay.defaults = defaults;
+    VqDigitalWalletGoogle.defaults = defaults;
 
     if (!noGlobal) {
-        var _EpsGooglePay = window.EpsGooglePay;
+        var _VqDigitalWalletGoogle = window.VqDigitalWalletGoogle;
 
         /**
-         * Restore previous EpsGooglePay and return this instance
-         * @memberof EpsGooglePay
+         * Restore previous VqDigitalWalletGoogle and return this instance
+         * @memberof VqDigitalWalletGoogle
          * @static
-         * @returns {EpsGooglePay} EpsGooglePay constructor
+         * @returns {VqDigitalWalletGoogle} VqDigitalWalletGoogle constructor
          * @example
-         * const EpsGooglePay = window.EpsGooglePay.noConflict();
+         * const VqDigitalWalletGoogle = window.VqDigitalWalletGoogle.noConflict();
          */
-        EpsGooglePay.noConflict = function () {
-            if (window.EpsGooglePay === EpsGooglePay) {
-                window.EpsGooglePay = _EpsGooglePay;
+        VqDigitalWalletGoogle.noConflict = function () {
+            if (window.VqDigitalWalletGoogle === VqDigitalWalletGoogle) {
+                window.VqDigitalWalletGoogle = _VqDigitalWalletGoogle;
             }
-            return EpsGooglePay;
+            return VqDigitalWalletGoogle;
         };
 
-        window.EpsGooglePay = EpsGooglePay;
+        window.VqDigitalWalletGoogle = VqDigitalWalletGoogle;
     }
 
-    return EpsGooglePay;
+    return VqDigitalWalletGoogle;
 });
