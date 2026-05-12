@@ -181,7 +181,11 @@
      * Supported currencies for Google Pay transactions
      * @constant {string[]}
      */
-    var VALID_CURRENCIES = ['ZAR'];
+    var VALID_CURRENCIES = [
+        'AED', 'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'DKK', 'EGP', 'EUR',
+        'GBP', 'GHS', 'HKD', 'INR', 'JPY', 'KES', 'MXN', 'NGN', 'NOK',
+        'NZD', 'SEK', 'SGD', 'USD', 'ZAR'
+    ];
 
     /**
      * Configuration object for VqDigitalWalletGoogle initialization
@@ -414,7 +418,7 @@
      * const googlePay = VqDigitalWalletGoogle({
      *   environment: 'TEST',
      *   gateway: 'example',
-     *   merchantId: 'BCR2DN4T23YWKJHG',
+     *   merchantId: '12345678901234567890',
      *   merchantName: 'Test Merchant',
      *   gatewayMerchantId: 'test_merchant_123',
      *   allowedCardNetworks: ['MASTERCARD', 'VISA'],

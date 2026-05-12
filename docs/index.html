@@ -104,7 +104,8 @@
 <p><a href="https://badge.fury.io/js/vq-digitalwallet-google"><img src="https://badge.fury.io/js/vq-digitalwallet-google.svg" alt="npm version"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-Ready-blue.svg" alt="TypeScript"></a>
-<a href="#browser-compatibility"><img src="https://img.shields.io/badge/Browser-Modern-green.svg" alt="Browser Support"></a></p>
+<a href="#browser-compatibility"><img src="https://img.shields.io/badge/Browser-Modern-green.svg" alt="Browser Support"></a>
+<a href="https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a></p>
 <p>A lightweight, JavaScript SDK for integrating Google Pay with secure payment processing. Features advanced security, rate limiting, session management, and comprehensive error handling.</p>
 <h2>✨ Features</h2>
 <ul>
@@ -117,6 +118,9 @@
 <li>📊 <strong>Session Management</strong> - Secure token handling</li>
 <li>🔧 <strong>Easy Integration</strong> - Simple, intuitive API</li>
 </ul>
+<h2>🎮 Live Demo</h2>
+<p>The demo is live at <strong><a href="https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/">https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/</a></strong></p>
+<p>You can also run it locally — open <code>demo/index.html</code> directly in any browser. No server required.</p>
 <h2>📦 Installation</h2>
 <h3>NPM</h3>
 <pre class="prettyprint source lang-bash"><code>npm install vq-digitalwallet-google
@@ -133,7 +137,7 @@
 const googlePay = new VqDigitalWalletGoogle({
     environment: 'TEST', // or 'PRODUCTION'
     gateway: 'your-gateway-name',
-    merchantId: 'BCR2DN4T23YWKJHG',
+    merchantId: '12345678901234567890',
     merchantName: 'Your Store Name',
     gatewayMerchantId: 'your-gateway-merchant-id',
     onTokenGenerated: function(token, error) {
@@ -181,6 +185,9 @@ googlePay.initialize()
 &lt;/body>
 &lt;/html>
 </code></pre>
+<blockquote>
+<p>See the <a href="./demo/index.html">interactive demo</a> for a full working example.</p>
+</blockquote>
 <h2>📚 API Documentation</h2>
 <h3>Configuration Options</h3>
 <table>
@@ -258,9 +265,16 @@ googlePay.initialize()
 <td>Button type</td>
 </tr>
 <tr>
+<td><code>buttonSizeMode</code></td>
+<td><code>'static' | 'fill'</code></td>
+<td>❌</td>
+<td><code>'static'</code></td>
+<td>Button size mode</td>
+</tr>
+<tr>
 <td><code>onTokenGenerated</code></td>
 <td><code>function</code></td>
-<td>✅</td>
+<td>❌</td>
 <td><code>null</code></td>
 <td>Success/error callback</td>
 </tr>
@@ -326,6 +340,20 @@ googlePay.initialize()
 <p>Clears the stored session token.</p>
 <h4><code>destroy(): void</code></h4>
 <p>Cleanup method to destroy the instance.</p>
+<h4><code>encodePayloadToBase64(data): string</code></h4>
+<p>Encodes a string to Base64. Used internally during payment processing; exposed for debugging and testing.</p>
+<pre class="prettyprint source lang-javascript"><code>const encoded = googlePay.encodePayloadToBase64('{&quot;orderId&quot;:&quot;TEST-001&quot;,&quot;amount&quot;:99.99}');
+</code></pre>
+<p>Throws if encoding fails.</p>
+<h4><code>decodePayloadFromBase64(payload): object</code></h4>
+<p>Decodes a Base64 string back to a parsed JSON object.</p>
+<pre class="prettyprint source lang-javascript"><code>const decoded = googlePay.decodePayloadFromBase64(encodedString);
+// decoded = { orderId: 'TEST-001', amount: 99.99 }
+</code></pre>
+<ul>
+<li>Throws <code>'Invalid base64 encoded payload'</code> for malformed Base64 input</li>
+<li>Throws <code>'Failed to decode base64 payload'</code> if the decoded content is not valid JSON</li>
+</ul>
 <h2>🔧 Advanced Usage</h2>
 <h3>TypeScript Integration</h3>
 <pre class="prettyprint source lang-typescript"><code>import VqDigitalWalletGoogle, { 
@@ -337,7 +365,7 @@ googlePay.initialize()
 const config: VqDigitalWalletGoogleConfig = {
     environment: 'TEST',
     gateway: 'example',
-    merchantId: 'BCR2DN4T23YWKJHG',
+    merchantId: '12345678901234567890',
     merchantName: 'Test Merchant',
     gatewayMerchantId: 'test_merchant_123',
     onTokenGenerated: (token: string | null, error?: Error) => {
@@ -355,7 +383,7 @@ const googlePay = new VqDigitalWalletGoogle(config);
 <pre class="prettyprint source lang-javascript"><code>const googlePay = new VqDigitalWalletGoogle({
     environment: 'TEST',
     gateway: 'example',
-    merchantId: 'BCR2DN4T23YWKJHG',
+    merchantId: '12345678901234567890',
     merchantName: 'Test Store',
     gatewayMerchantId: 'test123',
     onTokenGenerated: function(token, error) {
@@ -389,6 +417,15 @@ const googlePay = new VqDigitalWalletGoogle(config);
     // Show user-friendly message
 }
 </code></pre>
+<h2>🔐 Security Best Practices</h2>
+<ul>
+<li><strong>Never expose credentials in frontend code</strong> — <code>gatewayMerchantId</code> and merchant credentials belong in environment variables, not hard-coded JavaScript.</li>
+<li><strong>Always validate the token server-side</strong> — the Base64 token returned by <code>requestPayment</code> must be forwarded server-to-server to your payment gateway for authorisation. Never treat a client-side token as proof of a successful charge.</li>
+<li><strong>Use PRODUCTION only with a registered merchant account</strong> — complete <a href="https://pay.google.com/business/console">Google Pay's merchant approval process</a> before switching environments.</li>
+<li><strong>Enforce HTTPS</strong> — Google Pay will not load on non-secure origins in production.</li>
+<li><strong>Rate limiting is client-side only</strong> — the SDK enforces 3 requests/second per instance as a UX safeguard. Implement independent server-side rate limiting on your token processing endpoint.</li>
+<li><strong>Rotate credentials regularly</strong> — treat <code>gatewayMerchantId</code> like a password; regenerate it if you suspect exposure.</li>
+</ul>
 <h2>🌐 Browser Compatibility</h2>
 <table>
 <thead>
@@ -497,7 +534,7 @@ function GooglePayButton({ amount, onPaymentSuccess }) {
         const googlePay = new VqDigitalWalletGoogle({
             environment: 'TEST',
             gateway: 'example',
-            merchantId: 'BCR2DN4T23YWKJHG',
+            merchantId: '12345678901234567890',
             merchantName: 'React Store',
             gatewayMerchantId: 'react_merchant_123',
             onTokenGenerated: (token, error) => {
@@ -551,7 +588,7 @@ export default {
             this.googlePay = new VqDigitalWalletGoogle({
                 environment: 'TEST',
                 gateway: 'example',
-                merchantId: 'BCR2DN4T23YWKJHG',
+                merchantId: '12345678901234567890',
                 merchantName: 'Vue Store',
                 gatewayMerchantId: 'vue_merchant_123',
                 onTokenGenerated: (token, error) => {
@@ -576,6 +613,9 @@ export default {
 };
 &lt;/script>
 </code></pre>
+<blockquote>
+<p><strong>Vue 3:</strong> Replace <code>beforeDestroy()</code> with <code>beforeUnmount()</code>.</p>
+</blockquote>
 <h3>Angular Integration</h3>
 <h4>Service Implementation:</h4>
 <pre class="prettyprint source lang-typescript"><code>// google-pay.service.ts
@@ -694,7 +734,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     const config = {
       environment: 'TEST' as const,
       gateway: 'example',
-      merchantId: 'BCR2DN4T23YWKJHG',
+      merchantId: '12345678901234567890',
       merchantName: 'Angular Store',
       gatewayMerchantId: 'angular_merchant_123',
       onTokenGenerated: (token: string | null, error?: Error) => {
@@ -802,12 +842,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.</p>
-<h2>🆘 Support</h2>
-<ul>
-<li>📧 <strong>Email</strong>: veritas.quaesitor@gmail.com</li>
-<li>📖 <strong>Documentation</strong>: See the docs/ folder</li>
-<li>🐛 <strong>Issues</strong>: Open an issue on GitHub</li>
-</ul>
 <h2>🏷️ Version History</h2>
 <h3>v1.1.0</h3>
 <ul>
