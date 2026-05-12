@@ -325,7 +325,7 @@
        * const googlePay = VqDigitalWalletGoogle({
        *   environment: 'TEST',
        *   gateway: 'example',
-       *   merchantId: 'BCR2DN4T23YWKJHG',
+       *   merchantId: '12345678901234567890',
        *   merchantName: 'Test Merchant',
        *   gatewayMerchantId: 'test_merchant_123',
        *   allowedCardNetworks: ['MASTERCARD', 'VISA'],

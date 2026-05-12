@@ -70,7 +70,7 @@ describe('VqDigitalWalletGoogle', () => {
     validConfig = {
       environment: 'TEST',
       gateway: 'example',
-      merchantId: 'BCR2DN4T23YWKJHG',
+      merchantId: '12345678901234567890',
       merchantName: 'Test Merchant',
       gatewayMerchantId: 'test_merchant_123',
       allowedCardNetworks: ['MASTERCARD', 'VISA'],
@@ -283,7 +283,7 @@ describe('VqDigitalWalletGoogle', () => {
     test('should block prototype pollution via __proto__ config key (CWE-1321)', () => {
       // JSON.parse creates an object with __proto__ as an own enumerable property
       const malicious = JSON.parse(
-        '{"environment":"TEST","gateway":"example","merchantId":"BCR2DN4T23YWKJHG",' +
+        '{"environment":"TEST","gateway":"example","merchantId":"12345678901234567890",' +
         '"merchantName":"Test","gatewayMerchantId":"test123",' +
         '"allowedCardNetworks":["VISA"],"allowedCardAuthMethods":["PAN_ONLY"],' +
         '"__proto__":{"polluted":true}}'

@@ -54,7 +54,7 @@ yarn add vq-digitalwallet-google
 const googlePay = new VqDigitalWalletGoogle({
     environment: 'TEST', // or 'PRODUCTION'
     gateway: 'your-gateway-name',
-    merchantId: 'BCR2DN4T23YWKJHG',
+    merchantId: '12345678901234567890',
     merchantName: 'Your Store Name',
     gatewayMerchantId: 'your-gateway-merchant-id',
     onTokenGenerated: function(token, error) {
@@ -242,7 +242,7 @@ import VqDigitalWalletGoogle, {
 const config: VqDigitalWalletGoogleConfig = {
     environment: 'TEST',
     gateway: 'example',
-    merchantId: 'BCR2DN4T23YWKJHG',
+    merchantId: '12345678901234567890',
     merchantName: 'Test Merchant',
     gatewayMerchantId: 'test_merchant_123',
     onTokenGenerated: (token: string | null, error?: Error) => {
@@ -263,7 +263,7 @@ const googlePay = new VqDigitalWalletGoogle(config);
 const googlePay = new VqDigitalWalletGoogle({
     environment: 'TEST',
     gateway: 'example',
-    merchantId: 'BCR2DN4T23YWKJHG',
+    merchantId: '12345678901234567890',
     merchantName: 'Test Store',
     gatewayMerchantId: 'test123',
     onTokenGenerated: function(token, error) {
@@ -364,7 +364,7 @@ function GooglePayButton({ amount, onPaymentSuccess }) {
         const googlePay = new VqDigitalWalletGoogle({
             environment: 'TEST',
             gateway: 'example',
-            merchantId: 'BCR2DN4T23YWKJHG',
+            merchantId: '12345678901234567890',
             merchantName: 'React Store',
             gatewayMerchantId: 'react_merchant_123',
             onTokenGenerated: (token, error) => {
@@ -421,7 +421,7 @@ export default {
             this.googlePay = new VqDigitalWalletGoogle({
                 environment: 'TEST',
                 gateway: 'example',
-                merchantId: 'BCR2DN4T23YWKJHG',
+                merchantId: '12345678901234567890',
                 merchantName: 'Vue Store',
                 gatewayMerchantId: 'vue_merchant_123',
                 onTokenGenerated: (token, error) => {
@@ -573,7 +573,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     const config = {
       environment: 'TEST' as const,
       gateway: 'example',
-      merchantId: 'BCR2DN4T23YWKJHG',
+      merchantId: '12345678901234567890',
       merchantName: 'Angular Store',
       gatewayMerchantId: 'angular_merchant_123',
       onTokenGenerated: (token: string | null, error?: Error) => {
