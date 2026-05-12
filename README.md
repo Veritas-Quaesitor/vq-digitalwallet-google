@@ -21,9 +21,9 @@ A lightweight, JavaScript SDK for integrating Google Pay with secure payment pro
 
 ## 🎮 Live Demo
 
-Open [`demo/index.html`](./demo/index.html) in any browser to test the full SDK flow — initialization, button rendering, and all utility functions (Base64 encode/decode, UUID generation, session token management). No server required.
+The demo is live at **[https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/](https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/)**
 
-> Once the GitHub repository is live, the demo is also hosted at **https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/**
+You can also run it locally — open `demo/index.html` directly in any browser. No server required.
 
 ## 📦 Installation
 
@@ -123,7 +123,8 @@ googlePay.initialize()
 | `allowedCardAuthMethods` | `string[]`               | ✅        | `['PAN_ONLY', 'CRYPTOGRAM_3DS']` | Authentication methods               |
 | `buttonColor`            | `string`                 | ❌        | `'default'`                      | Button color theme                   |
 | `buttonType`             | `string`                 | ❌        | `'pay'`                          | Button type                          |
-| `onTokenGenerated`       | `function`               | ✅        | `null`                           | Success/error callback               |
+| `buttonSizeMode`         | `'static' \| 'fill'`    | ❌        | `'static'`                       | Button size mode                     |
+| `onTokenGenerated`       | `function`               | ❌        | `null`                           | Success/error callback               |
 | `scriptLoadTimeout`      | `number`                 | ❌        | `10000`                          | Script load timeout (ms)             |
 
 ### Core Methods
@@ -446,6 +447,8 @@ export default {
 </script>
 ```
 
+> **Vue 3:** Replace `beforeDestroy()` with `beforeUnmount()`.
+
 ### Angular Integration
 
 #### Service Implementation:
@@ -691,12 +694,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-## 🆘 Support
-
-- 📧 **Email**: fvaneeden83@gmail.com
-- 📖 **Documentation**: See the docs/ folder
-- 🐛 **Issues**: Open an issue on GitHub
 
 ## 🏷️ Version History
 
