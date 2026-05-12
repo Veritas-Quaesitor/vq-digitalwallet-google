@@ -23,6 +23,8 @@ A lightweight, JavaScript SDK for integrating Google Pay with secure payment pro
 
 The demo is live at **[https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/](https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/)**
 
+API documentation is at **[https://veritas-quaesitor.github.io/vq-digitalwallet-google/docs/](https://veritas-quaesitor.github.io/vq-digitalwallet-google/docs/)**
+
 You can also run it locally — open `demo/index.html` directly in any browser. No server required.
 
 ## 📦 Installation
