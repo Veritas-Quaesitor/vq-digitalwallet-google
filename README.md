@@ -1,50 +1,37 @@
 # 🚀 VQ Digital Wallet Google Pay SDK
 
-[![npm version](https://badge.fury.io/js/vq-digitalwallet-google.svg)](https://badge.fury.io/js/vq-digitalwallet-google)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/source-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 [![Browser Support](https://img.shields.io/badge/Browser-Modern-green.svg)](#browser-compatibility)
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo.html)
 
-A lightweight, JavaScript SDK for integrating Google Pay with secure payment processing. Features advanced security, rate limiting, session management, and comprehensive error handling.
+A Google Pay Web SDK, written in modular TypeScript, distributed as one GitHub-hosted browser script. Features rate limiting, session handling, and input validation — see [Security Best Practices](#-security-best-practices) for what the SDK does and does not protect against.
 
 ## ✨ Features
 
-- 🔒 **Enterprise Security** - Advanced validation and sanitization
-- ⚡ **Rate Limiting** - Built-in protection against abuse
-- 🎯 **TypeScript Support** - Full type definitions included
+- 🛡️ **Input Validation** - Configuration and payment-data validation before any request is made
+- ⚡ **Rate Limiting** - Client-side UX safeguard against abuse (pair with server-side limits)
+- 🎯 **TypeScript Source** - Written and tested in TypeScript; no type declarations are shipped to consumers (no confirmed demand)
 - 🌐 **Universal Compatibility** - Works in all modern browsers
 - 📱 **Mobile Optimized** - Perfect for mobile commerce
 - 🛡️ **Error Handling** - Comprehensive error management
-- 📊 **Session Management** - Secure token handling
+- 📊 **Session Management** - In-memory token handling, cleared on error/destroy
 - 🔧 **Easy Integration** - Simple, intuitive API
 
 ## 🎮 Live Demo
 
-The demo is live at **[https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/](https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo/)**
+The demo is live at **[https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo.html](https://veritas-quaesitor.github.io/vq-digitalwallet-google/demo.html)**
 
-API documentation is at **[https://veritas-quaesitor.github.io/vq-digitalwallet-google/docs/](https://veritas-quaesitor.github.io/vq-digitalwallet-google/docs/)**
+API documentation is at **[https://veritas-quaesitor.github.io/vq-digitalwallet-google/api/](https://veritas-quaesitor.github.io/vq-digitalwallet-google/api/)**
 
-You can also run it locally — open `demo/index.html` directly in any browser. No server required.
+You can also run it locally — open `docs/demo.html` directly in any browser. No server required.
 
 ## 📦 Installation
 
-### NPM
-
-```bash
-npm install vq-digitalwallet-google
-```
-
-### Yarn
-
-```bash
-yarn add vq-digitalwallet-google
-```
-
-### CDN
+This SDK is distributed as a single GitHub-hosted browser script — it is **not published to npm**. Include it directly:
 
 ```html
-<script src="https://unpkg.com/vq-digitalwallet-google@latest/vqdigitalwalletgoogle.js"></script>
+<script src="https://veritas-quaesitor.github.io/vq-digitalwallet-google/vq-google-pay.js"></script>
 ```
 
 ## 🚀 Quick Start
@@ -100,7 +87,7 @@ googlePay.initialize()
     <!-- Google Pay button container -->
     <div id="google-pay-button"></div>
 
-    <script src="https://unpkg.com/vq-digitalwallet-google@latest/vqdigitalwalletgoogle.js"></script>
+    <script src="https://veritas-quaesitor.github.io/vq-digitalwallet-google/vq-google-pay.js"></script>
     <script>
         // Your integration code here
     </script>
@@ -108,7 +95,7 @@ googlePay.initialize()
 </html>
 ```
 
-> See the [interactive demo](./demo/index.html) for a full working example.
+> See the [interactive demo](./docs/demo.html) for a full working example.
 
 ## 📚 API Documentation
 
@@ -230,34 +217,17 @@ const decoded = googlePay.decodePayloadFromBase64(encodedString);
 - Throws `'Invalid base64 encoded payload'` for malformed Base64 input
 - Throws `'Failed to decode base64 payload'` if the decoded content is not valid JSON
 
-## 🔧 Advanced Usage
+### Wire contract
 
-### TypeScript Integration
+The payment token returned by `requestPayment` and passed to `onTokenGenerated` is:
 
-```typescript
-import VqDigitalWalletGoogle, { 
-    VqDigitalWalletGoogleConfig, 
-    PaymentData, 
-    PaymentResult 
-} from 'vq-digitalwallet-google';
-
-const config: VqDigitalWalletGoogleConfig = {
-    environment: 'TEST',
-    gateway: 'example',
-    merchantId: '12345678901234567890',
-    merchantName: 'Test Merchant',
-    gatewayMerchantId: 'test_merchant_123',
-    onTokenGenerated: (token: string | null, error?: Error) => {
-        if (error) {
-            console.error('Payment failed:', error);
-        } else {
-            console.log('Payment token:', token);
-        }
-    }
-};
-
-const googlePay = new VqDigitalWalletGoogle(config);
+```text
+Token = btoa(JSON.stringify(rawGooglePayToken))
 ```
+
+This is the exact payload your backend must decode and forward to your payment gateway. Base64 here is an encoding for safe transport, not encryption — see [Security Best Practices](#-security-best-practices).
+
+## 🔧 Advanced Usage
 
 ### Error Handling
 
@@ -331,14 +301,14 @@ try {
 - JSON support
 - Modern DOM APIs
 
-## 🔒 Security Features
+## 🔒 Security-Relevant Behavior
 
 - ✅ **Input Sanitization** - All configuration strings are sanitized
-- ✅ **Rate Limiting** - Protection against abuse
+- ✅ **Rate Limiting** - Client-side abuse deterrent (not a substitute for server-side limits)
 - ✅ **Validation** - Comprehensive parameter validation
-- ✅ **Token Security** - Secure Base64 encoding
+- ✅ **Base64 Token Encoding** - Base64 is an encoding, not encryption; it makes the token transport-safe, not confidential — always verify tokens server-side (see [Security Best Practices](#-security-best-practices))
 - ✅ **Error Handling** - Safe error management
-- ✅ **Session Management** - Secure token storage
+- ✅ **Session Management** - In-memory token storage, cleared on error/destroy (nothing persisted to disk or browser storage)
 
 ## 🚨 Error Codes
 
@@ -354,16 +324,17 @@ try {
 
 ### React Integration
 
+Add the SDK `<script>` tag (see [Installation](#-installation)) to your app's HTML shell — there is no npm package to import.
+
 ```jsx
 import React, { useEffect, useRef } from 'react';
-import VqDigitalWalletGoogle from 'vq-digitalwallet-google';
 
 function GooglePayButton({ amount, onPaymentSuccess }) {
     const buttonRef = useRef(null);
     const googlePayRef = useRef(null);
 
     useEffect(() => {
-        const googlePay = new VqDigitalWalletGoogle({
+        const googlePay = new window.VqDigitalWalletGoogle({
             environment: 'TEST',
             gateway: 'example',
             merchantId: '12345678901234567890',
@@ -406,7 +377,7 @@ function GooglePayButton({ amount, onPaymentSuccess }) {
 </template>
 
 <script>
-import VqDigitalWalletGoogle from 'vq-digitalwallet-google';
+// Loaded via the SDK <script> tag in index.html — no npm package to import.
 
 export default {
     props: ['amount'],
@@ -420,7 +391,7 @@ export default {
     },
     methods: {
         initializeGooglePay() {
-            this.googlePay = new VqDigitalWalletGoogle({
+            this.googlePay = new window.VqDigitalWalletGoogle({
                 environment: 'TEST',
                 gateway: 'example',
                 merchantId: '12345678901234567890',
@@ -455,10 +426,14 @@ export default {
 
 #### Service Implementation:
 
+No type declarations are shipped with the hosted script — this example uses `any` at the SDK boundary, same as any other untyped global loaded via `<script>`:
+
 ```typescript
 // google-pay.service.ts
+// The SDK <script> tag must be present in index.html; no npm package to import.
 import { Injectable } from '@angular/core';
-import VqDigitalWalletGoogle, { VqDigitalWalletGoogleConfig, PaymentData } from 'vq-digitalwallet-google';
+
+declare const VqDigitalWalletGoogle: any;
 
 @Injectable({
   providedIn: 'root'
@@ -469,7 +444,7 @@ export class GooglePayService {
 
   constructor() {}
 
-  async initialize(config: VqDigitalWalletGoogleConfig): Promise<boolean> {
+  async initialize(config: Record<string, unknown>): Promise<boolean> {
     if (this.isInitialized) {
       return this.googlePay.isReadyToPay;
     }
@@ -486,7 +461,7 @@ export class GooglePayService {
     }
   }
 
-  createButton(container: HTMLElement, paymentData: PaymentData): HTMLElement | null {
+  createButton(container: HTMLElement, paymentData: Record<string, unknown>): HTMLElement | null {
     if (!this.isInitialized || !this.googlePay.isReadyToPay) {
       console.warn('Google Pay not ready');
       return null;
@@ -495,7 +470,7 @@ export class GooglePayService {
     return this.googlePay.createButton(container, paymentData);
   }
 
-  async requestPayment(paymentData: PaymentData): Promise<any> {
+  async requestPayment(paymentData: Record<string, unknown>): Promise<any> {
     if (!this.isInitialized) {
       throw new Error('Google Pay not initialized');
     }
@@ -699,19 +674,7 @@ SOFTWARE.
 
 ## 🏷️ Version History
 
-### v1.1.0
-
-- ✅ Enhanced security features
-- ✅ TypeScript definitions
-- ✅ Improved error handling
-- ✅ Rate limiting
-- ✅ Session management
-
-### v1.0.0
-
-- ✅ Initial release
-- ✅ Basic Google Pay integration
-- ✅ UMD/CommonJS/ES6 support
+See [CHANGELOG.md](https://github.com/Veritas-Quaesitor/vq-digitalwallet-google/blob/main/CHANGELOG.md).
 
 ---
 

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "name": "VQ Digital Wallet Google Pay SDK",
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "hideGenerator": true,
+  "cleanOutputDir": true,
+  "highlightLanguages": ["typescript", "javascript", "json", "html", "bash", "jsx", "tsx", "vue"]
+}
